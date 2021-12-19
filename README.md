@@ -1,4 +1,4 @@
-# Binary parser
+# Binary parser [![Deno](https://github.com/glooca/parser/actions/workflows/deno.yml/badge.svg?branch=main)](https://github.com/glooca/parser/actions/workflows/deno.yml)
 
 A simple parser for easily creating both encoding and decoding for a given data type
 
