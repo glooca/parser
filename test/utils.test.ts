@@ -1,36 +1,31 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import {
-  asyncMergeUint8Arrays,
-  bytesFrom,
-  mergeUint8Arrays,
-  numberFrom,
-} from "../utils.ts";
+import { asyncMergeUint8Arrays, mergeUint8Arrays } from "../utils.ts";
 
-const numbers = [
-  [0, [0]],
-  [255, [255]],
-  [256, [0, 1]],
-  [2048, [0, 8]],
-  [65535, [255, 255]],
-  [156346, [186, 98, 2]],
-  [23374016, [192, 168, 100, 1]],
-  [4294967295, [255, 255, 255, 255]],
-] as [number, number[]][];
+// const numbers = [
+//   [0, [0]],
+//   [255, [255]],
+//   [256, [0, 1]],
+//   [2048, [0, 8]],
+//   [65535, [255, 255]],
+//   [156346, [186, 98, 2]],
+//   [23374016, [192, 168, 100, 1]],
+//   [4294967295, [255, 255, 255, 255]],
+// ] as [number, number[]][];
 
-Deno.test("number from bytes", () => {
-  numbers.forEach(([expected, byteValues]) => {
-    const bytes = new Uint8Array(byteValues);
-    const value = numberFrom(bytes);
-    assertEquals(value, expected);
-  });
-});
+// Deno.test("number from bytes", () => {
+//   numbers.forEach(([expected, byteValues]) => {
+//     const bytes = new Uint8Array(byteValues);
+//     const value = numberFrom(bytes);
+//     assertEquals(value, expected);
+//   });
+// });
 
-Deno.test("bytes from number", () => {
-  numbers.forEach(([number, expected]) => {
-    const bytes = [...bytesFrom(number, expected.length)];
-    assertEquals(bytes, expected);
-  });
-});
+// Deno.test("bytes from number", () => {
+//   numbers.forEach(([number, expected]) => {
+//     const bytes = [...bytesFrom(number, expected.length)];
+//     assertEquals(bytes, expected);
+//   });
+// });
 
 Deno.test("merge uint8Arrays", () => {
   const aCont = [53, 143, 43];

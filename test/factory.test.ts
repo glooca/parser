@@ -17,7 +17,7 @@ Deno.test("coder factory interface", async () => {
     stringData: string;
   }
   const testItemCoder: Coder<TestItem> = coderFactory((r) => {
-    r(u32, "myProp");
+    r(u32(), "myProp");
     r(pad(2));
     r(nullTermStr, "stringData");
   });
@@ -39,7 +39,7 @@ Deno.test("coder factory interface", async () => {
 Deno.test("coder factory any", async () => {
   // deno-lint-ignore no-explicit-any
   const testItemCoder: Coder<any> = coderFactory((r) => {
-    r(u32, "myProp");
+    r(u32(), "myProp");
     r(pad(2));
     r(nullTermStr, "stringData");
   });
@@ -68,9 +68,9 @@ Deno.test("coder factory class", async () => {
     }
   }
   const testClassCoder = typedCoderFactory(TestClass, (r) => {
-    r(u16, "classProp");
+    r(u16(), "classProp");
     r(pad(3));
-    r(u16LenStr, "stringData");
+    r(u16LenStr(), "stringData");
   });
 
   const testStr = "Hello, World!";
