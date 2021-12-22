@@ -1,4 +1,7 @@
-import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
+import {
+  assertEquals,
+  assertRejects,
+} from "https://deno.land/std@0.118.0/testing/asserts.ts";
 import {
   Cursor,
   nullTermStr,
@@ -18,6 +21,9 @@ const testStr =
 const testStrByteLength = new TextEncoder().encode(testStr).length;
 
 Deno.test("known byte length string", async () => {
+  assertRejects(async () => {
+    await str(testStrByteLength - 1).encode(testStr);
+  });
   const data = await str(testStrByteLength).encode(testStr);
   assertEquals(data.length, testStrByteLength);
   const cursor = new Cursor(0);
