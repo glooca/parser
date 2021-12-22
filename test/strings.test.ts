@@ -1,6 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
 import {
-  Coder,
   Cursor,
   nullTermStr,
   str,
@@ -26,21 +25,31 @@ Deno.test("known byte length string", async () => {
   assertEquals(cursor.index, data.length);
 });
 
-(
-  [
-    ["u8", u8, 1, u8LenStr],
-    ["u16", u16, 2, u16LenStr],
-    ["u32", u32, 4, u32LenStr],
-  ] as [string, Coder<number>, number, Coder<string>][]
-).forEach(([size, lenCoder, numberByteLength, nLenStr]) => {
-  Deno.test(`${size} length string`, async () => {
-    const data = await nLenStr.encode(testStr);
-    assertEquals(data.length, numberByteLength + testStrByteLength);
-    assertEquals(await lenCoder.decode(data), testStrByteLength);
-    const cursor = new Cursor(0);
-    assertEquals(await nLenStr.decode(data, cursor), testStr);
-    assertEquals(cursor.index, data.length);
-  });
+Deno.test("u8 length string", async () => {
+  const data = await u8LenStr().encode(testStr);
+  assertEquals(data.length, 1 + testStrByteLength);
+  assertEquals(await u8().decode(data), testStrByteLength);
+  const cursor = new Cursor(0);
+  assertEquals(await u8LenStr().decode(data, cursor), testStr);
+  assertEquals(cursor.index, data.length);
+});
+
+Deno.test("u16 length string", async () => {
+  const data = await u16LenStr().encode(testStr);
+  assertEquals(data.length, 2 + testStrByteLength);
+  assertEquals(await u16().decode(data), testStrByteLength);
+  const cursor = new Cursor(0);
+  assertEquals(await u16LenStr().decode(data, cursor), testStr);
+  assertEquals(cursor.index, data.length);
+});
+
+Deno.test("u32 length string", async () => {
+  const data = await u32LenStr().encode(testStr);
+  assertEquals(data.length, 4 + testStrByteLength);
+  assertEquals(await u32().decode(data), testStrByteLength);
+  const cursor = new Cursor(0);
+  assertEquals(await u32LenStr().decode(data, cursor), testStr);
+  assertEquals(cursor.index, data.length);
 });
 
 Deno.test("null terminated string", async () => {

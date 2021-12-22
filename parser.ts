@@ -1,9 +1,9 @@
-import {
-  asyncMergeUint8Arrays,
-  bytesFrom,
-  mergeUint8Arrays,
-  numberFrom,
-} from "./utils.ts";
+import { asyncMergeUint8Arrays, mergeUint8Arrays } from "./utils.ts";
+
+export enum Endian {
+  Little,
+  Big,
+}
 
 export class Cursor {
   index: number;
@@ -12,71 +12,115 @@ export class Cursor {
   }
 }
 
+export type Decoder<T> = (data: Uint8Array, cursor?: Cursor) => Promise<T>;
+export type Encoder<T> = (data: T) => Promise<Uint8Array>;
+
 export interface Coder<T> {
-  decode(data: Uint8Array, cursor?: Cursor): Promise<T>;
-  encode(data: T): Promise<Uint8Array>;
+  decode: Decoder<T>;
+  encode: Encoder<T>;
+}
+export type CoderGenerator<T, Y> = (instance: Partial<T>) => Coder<Y>;
+type CoderInstance<T, Y> = Coder<Y> | CoderGenerator<T, Y>;
+
+type RegisterCoder<T> = <J extends keyof T>(
+  coder:
+    | CoderInstance<T, T[J]>
+    | CoderInstance<T, void>
+    | ((instance: Partial<T>) => void),
+  name?: J
+) => void;
+export type CodingFormat<T> = (register: RegisterCoder<T>) => void;
+
+type CoderList<T> = [
+  keyof T | undefined,
+  CoderInstance<T, T[keyof T] | void> | ((instance: Partial<T>) => void)
+][];
+function parseCoderList<T>(
+  format: CodingFormat<T> | CoderList<T>
+): CoderList<T> {
+  if (typeof format !== "function") return format;
+  const coders: CoderList<T> = [];
+  format((coder, name) => {
+    coders.push([
+      name,
+      coder as
+        | Coder<void | T[keyof T]>
+        | CoderGenerator<T, void | T[keyof T]>
+        | ((instance: Partial<T>) => void),
+    ]);
+  });
+  return coders;
 }
 
-type CoderGenerator<T, Y> = (instance: Partial<T>) => Coder<Y>;
-export function coderFactory<T, K extends keyof T>(
-  format: (
-    register: <J extends K>(
-      coder: Coder<T[J] | void> | CoderGenerator<T, T[J] | void>,
-      // coder: Coder<T[K] | void> | CoderGenerator<T, T[K] | void>,
-      name?: J
-    ) => void
-  ) => void
-): Coder<T> {
-  const coders: [
-    K | undefined,
-    Coder<T[K] | void> | CoderGenerator<T, T[K] | void>
-  ][] = [];
-  format((coder, name) => {
-    coders.push([name, coder]);
-  });
-  return {
-    async decode(data, cursor = new Cursor()) {
-      const retVal: Partial<T> = {};
-      for (let i = 0; i < coders.length; i++) {
-        let [name, coder] = coders[i];
-        if (typeof coder === "function") coder = coder(retVal as T);
-        const decodedData = await coder.decode(data, cursor);
-        if (name) retVal[name] = decodedData ?? undefined;
+export function decoderFactory<T>(
+  data: CodingFormat<T> | CoderList<T>
+): Decoder<T> {
+  const coders = parseCoderList(data);
+  return async function (data, cursor = new Cursor()) {
+    const retVal: Partial<T> = {};
+    for (let i = 0; i < coders.length; i++) {
+      let [name, coder] = coders[i];
+      if (typeof coder === "function") {
+        const res = coder(retVal as T);
+        if (res == null) continue;
+        coder = res;
       }
-      return retVal as T;
-    },
-    encode(data) {
-      return asyncMergeUint8Arrays(
-        ...coders.map(([name, coder]) => {
-          if (typeof coder === "function") coder = coder(data);
-          return coder.encode(name ? data[name] : undefined);
-        })
-      );
-    },
+      const decodedData = await coder.decode(data, cursor);
+      if (name) retVal[name] = decodedData ?? undefined;
+    }
+    return retVal as T;
   };
 }
 
-export function typedCoderFactory<T, K extends keyof T>(
+export function typedDecoderFactory<T>(
   // deno-lint-ignore no-explicit-any
   type: new (...args: any) => T,
-  format: (
-    register: <J extends keyof T>(
-      coder: Coder<T[J] | void> | CoderGenerator<T, T[J] | void>,
-      name?: J
-    ) => void
-  ) => void
-): Coder<T> {
-  const coder: Coder<T> = coderFactory(format);
+  data: CodingFormat<T> | CoderList<T>
+): Decoder<T> {
+  const decoder = decoderFactory(data);
+  return async function (data, cursor = new Cursor()) {
+    const obj = Object.create(type.prototype);
+    const val = await decoder(data, cursor);
+    Object.assign(obj, val);
+    return obj;
+  };
+}
+
+export function encoderFactory<T>(
+  data: CodingFormat<T> | CoderList<T>
+): Encoder<T> {
+  const coders = parseCoderList(data);
+  return function (data: T) {
+    return asyncMergeUint8Arrays(
+      ...coders.map(([name, coder]) => {
+        if (typeof coder === "function") {
+          const res = coder(data);
+          if (res == null) return Promise.resolve(new Uint8Array());
+          coder = res;
+        }
+        return coder.encode(name ? data[name] : undefined);
+      })
+    );
+  };
+}
+
+export function coderFactory<T>(format: CodingFormat<T>): Coder<T> {
+  const coders = parseCoderList(format);
   return {
-    async decode(data, cursor = new Cursor()) {
-      const obj = Object.create(type.prototype);
-      const val = await coder.decode(data, cursor);
-      Object.assign(obj, val);
-      return obj;
-    },
-    async encode(data) {
-      return await coder.encode(data);
-    },
+    decode: decoderFactory(coders),
+    encode: encoderFactory(coders),
+  };
+}
+
+export function typedCoderFactory<T>(
+  // deno-lint-ignore no-explicit-any
+  type: new (...args: any) => T,
+  format: CodingFormat<T>
+): Coder<T> {
+  const coders = parseCoderList(format);
+  return {
+    decode: typedDecoderFactory(type, coders),
+    encode: encoderFactory(coders),
   };
 }
 
@@ -101,46 +145,101 @@ export function raw(byteLength: number): Coder<Uint8Array> {
     },
     encode(data) {
       if (data.byteLength != byteLength) {
-        console.warn(
-          new Error(
-            `Failed to store ${data} in ${byteLength} byte${
-              byteLength > 1 ? "s" : ""
-            }`
-          )
+        throw new Error(
+          `Failed to store ${data} in ${byteLength} byte${
+            byteLength > 1 ? "s" : ""
+          }`
         );
-        if (data.byteLength > byteLength) {
-          data = new Uint8Array(data.slice(0, byteLength));
-        } else {
-          data = new Uint8Array(byteLength).map((_, index) =>
-            byteLength < data.byteLength ? data[index] : 0
-          );
-        }
       }
       return Promise.resolve(data);
     },
   };
 }
 
-function numCoder(byteLength: number): Coder<number> {
-  return {
-    async decode(data, cursor = new Cursor()) {
-      return numberFrom(await raw(byteLength).decode(data, cursor));
-    },
-    encode(data) {
-      return raw(byteLength).encode(bytesFrom(data, byteLength));
-    },
+enum NumType {
+  u8,
+  u16,
+  u32,
+  i8,
+  i16,
+  i32,
+  f32,
+  f64,
+}
+const numData = {
+  [NumType.u8]: {
+    len: 1,
+    get: (dv: DataView) => dv.getUint8.bind(dv),
+    set: (dv: DataView) => dv.setUint8.bind(dv),
+  },
+  [NumType.u16]: {
+    len: 2,
+    get: (dv: DataView) => dv.getUint16.bind(dv),
+    set: (dv: DataView) => dv.setUint16.bind(dv),
+  },
+  [NumType.u32]: {
+    len: 4,
+    get: (dv: DataView) => dv.getUint32.bind(dv),
+    set: (dv: DataView) => dv.setUint32.bind(dv),
+  },
+  [NumType.i8]: {
+    len: 1,
+    get: (dv: DataView) => dv.getInt8.bind(dv),
+    set: (dv: DataView) => dv.setInt8.bind(dv),
+  },
+  [NumType.i16]: {
+    len: 2,
+    get: (dv: DataView) => dv.getInt16.bind(dv),
+    set: (dv: DataView) => dv.setInt16.bind(dv),
+  },
+  [NumType.i32]: {
+    len: 4,
+    get: (dv: DataView) => dv.getInt32.bind(dv),
+    set: (dv: DataView) => dv.setInt32.bind(dv),
+  },
+  [NumType.f32]: {
+    len: 4,
+    get: (dv: DataView) => dv.getFloat32.bind(dv),
+    set: (dv: DataView) => dv.setFloat32.bind(dv),
+  },
+  [NumType.f64]: {
+    len: 8,
+    get: (dv: DataView) => dv.getFloat64.bind(dv),
+    set: (dv: DataView) => dv.setFloat64.bind(dv),
+  },
+};
+function numCoder(numType: NumType, defaultEndian: Endian) {
+  return (endian = defaultEndian): Coder<number> => {
+    return {
+      decode(data, cursor = new Cursor()) {
+        const { len, get } = numData[numType];
+        const dv = new DataView(data.buffer);
+        const num = get(dv)(cursor.index);
+        cursor.index += len;
+        return Promise.resolve(num);
+      },
+      encode(data) {
+        const { len, set } = numData[numType];
+        const dv = new DataView(new Uint8Array(len).buffer);
+        set(dv)(0, data, endian === Endian.Little);
+        return Promise.resolve(new Uint8Array(dv.buffer));
+      },
+    };
   };
 }
 
-export const u8 = numCoder(1);
-export const u16 = numCoder(2);
-export const u32 = numCoder(4);
+export const u8 = numCoder(NumType.u8, Endian.Big);
+export const u16 = numCoder(NumType.u16, Endian.Big);
+export const u32 = numCoder(NumType.u32, Endian.Big);
 
-export function arr<T>(
-  length: number,
-  coder: Coder<T>,
-  defaultVal?: T
-): Coder<T[]> {
+export const i8 = numCoder(NumType.i8, Endian.Big);
+export const i16 = numCoder(NumType.i16, Endian.Big);
+export const i32 = numCoder(NumType.i32, Endian.Big);
+
+export const f32 = numCoder(NumType.f32, Endian.Big);
+export const f64 = numCoder(NumType.f64, Endian.Big);
+
+export function arr<T>(length: number, coder: Coder<T>): Coder<T[]> {
   return {
     async decode(data, cursor = new Cursor()) {
       const retVal: T[] = [];
@@ -150,41 +249,52 @@ export function arr<T>(
       return retVal;
     },
     encode(data) {
-      let encodedValues = data.map((value) => coder.encode(value));
-      if (encodedValues.length != length) {
-        console.warn(
-          new Error(
-            `Failed to store ${encodedValues.length} elements into an array of length ${length}`
-          )
+      if (data.length != length) {
+        throw new Error(
+          `Failed to store ${data.length} elements into an array of length ${length}`
         );
-        if (encodedValues.length > length) {
-          encodedValues = encodedValues.slice(0, length);
-        } else if (defaultVal != null) {
-          while (encodedValues.length < length) {
-            encodedValues.push(coder.encode(defaultVal));
-          }
-        } else {
-          console.warn(
-            new Error(
-              `Failed to create an array of ${coder.constructor.name} with length ${length}`
-            )
-          );
-        }
       }
+      const encodedValues = data.map((value) => coder.encode(value));
       return asyncMergeUint8Arrays(...encodedValues);
     },
   };
 }
 
+function nLenArrCoder<T>(length: Coder<number>, coder: Coder<T>): Coder<T[]> {
+  return {
+    async decode(data, cursor = new Cursor()) {
+      const strLen = await length.decode(data, cursor);
+      const retArr: Promise<T>[] = [];
+      for (let i = 0; i < strLen; i++) {
+        retArr.push(coder.decode(data, cursor));
+      }
+      return Promise.all(retArr);
+    },
+    encode(data) {
+      return asyncMergeUint8Arrays(
+        length.encode(data.length),
+        ...data.map((val) => coder.encode(val))
+      );
+    },
+  };
+}
+
+export const u8LenArr = <T>(coder: Coder<T>, endian = Endian.Big) =>
+  nLenArrCoder(u8(endian), coder);
+export const u16LenArr = <T>(coder: Coder<T>, endian = Endian.Big) =>
+  nLenArrCoder(u16(endian), coder);
+export const u32LenArr = <T>(coder: Coder<T>, endian = Endian.Big) =>
+  nLenArrCoder(u32(endian), coder);
+
 export const bool: Coder<boolean> = {
   async decode(data, cursor = new Cursor()) {
-    const num = await u8.decode(data, cursor);
+    const num = await u8().decode(data, cursor);
     if (num != 0 && num != 1)
-      console.warn(new Error(`Failed to read value ${num} as boolean`));
+      throw new Error(`Failed to read value ${num} as boolean`);
     return num == 1;
   },
   encode(data) {
-    return u8.encode(data ? 1 : 0);
+    return u8().encode(data ? 1 : 0);
   },
 };
 
@@ -198,22 +308,13 @@ export function str(byteLength: number): Coder<string> {
       );
     },
     encode(data) {
-      let encoded = new TextEncoder().encode(data);
+      const encoded = new TextEncoder().encode(data);
       if (encoded.byteLength != byteLength) {
-        console.warn(
-          new Error(
-            `Failed to store text "${data}" in ${byteLength} byte${
-              byteLength > 1 ? "s" : ""
-            }`
-          )
+        throw new Error(
+          `Failed to store text "${data}" in ${byteLength} byte${
+            byteLength > 1 ? "s" : ""
+          }`
         );
-        if (encoded.byteLength > byteLength) {
-          encoded = new Uint8Array(encoded.slice(0, byteLength));
-        } else {
-          encoded = new Uint8Array(byteLength).map((_, index) =>
-            byteLength < encoded.byteLength ? encoded[index] : 0x00
-          );
-        }
       }
       return Promise.resolve(encoded);
     },
@@ -233,9 +334,9 @@ function nLenStrCoder(length: Coder<number>): Coder<string> {
   };
 }
 
-export const u8LenStr = nLenStrCoder(u8);
-export const u16LenStr = nLenStrCoder(u16);
-export const u32LenStr = nLenStrCoder(u32);
+export const u8LenStr = (endian = Endian.Big) => nLenStrCoder(u8(endian));
+export const u16LenStr = (endian = Endian.Big) => nLenStrCoder(u16(endian));
+export const u32LenStr = (endian = Endian.Big) => nLenStrCoder(u32(endian));
 
 export const nullTermStr: Coder<string> = {
   decode(data, cursor = new Cursor(0)) {

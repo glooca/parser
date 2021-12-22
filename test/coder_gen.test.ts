@@ -9,13 +9,13 @@ import {
   u32,
 } from "../parser.ts";
 
-Deno.test("coder factory generator", async () => {
+Deno.test("interface coder factory generator", async () => {
   interface TestItem {
     version: number;
     data: TestItemData;
   }
   const testItemCoder: Coder<TestItem> = coderFactory((r) => {
-    r(u16, "version");
+    r(u16(), "version");
     r((item) => testItemDataCoder(item.version ?? 0), "data");
   });
   interface TestItemData {
@@ -24,11 +24,11 @@ Deno.test("coder factory generator", async () => {
   }
   function testItemDataCoder(version: number): Coder<TestItemData> {
     return coderFactory((r) => {
-      r(u32, "myProp");
+      r(u32(), "myProp");
       if (version > 3) {
         r(nullTermStr as Coder<string>, "versionDependentData");
       } else {
-        r(u16LenStr as Coder<string>, "versionDependentData");
+        r(u16LenStr() as Coder<string>, "versionDependentData");
       }
     });
   }
