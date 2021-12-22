@@ -1,4 +1,7 @@
-import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
+import {
+  assertEquals,
+  assertRejects,
+} from "https://deno.land/std@0.118.0/testing/asserts.ts";
 import { bool, Cursor } from "../parser.ts";
 
 [true, false].forEach((boolValue) => {
@@ -8,6 +11,9 @@ import { bool, Cursor } from "../parser.ts";
     assertEquals(data[0], boolValue ? 0x01 : 0x00);
     const cursor = new Cursor(0);
     assertEquals(await bool.decode(data, cursor), boolValue);
+    assertRejects(async () => {
+      await bool.decode(new Uint8Array([5]));
+    });
     assertEquals(cursor.index, 1);
   });
 });

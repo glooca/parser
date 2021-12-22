@@ -109,7 +109,7 @@ class MyClass {
   someProp = 0;
   anotherProp = "";
 }
-const myCoder = typedCoderFactory<MyClass>(MyClass, (r) => {
+const myCoder = typedCoderFactory(MyClass, (r) => {
   r(u32(), "someProp");
   r(pad(2));
   r(nullTermStr, "anotherProp");
