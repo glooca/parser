@@ -4,6 +4,7 @@ import {
 } from "https://deno.land/std@0.118.0/testing/asserts.ts";
 import {
   Cursor,
+  Endian,
   nullTermStr,
   str,
   u16,
@@ -55,6 +56,33 @@ Deno.test("u32 length string", async () => {
   assertEquals(await u32().decode(data), testStrByteLength);
   const cursor = new Cursor(0);
   assertEquals(await u32LenStr().decode(data, cursor), testStr);
+  assertEquals(cursor.index, data.length);
+});
+
+Deno.test("little endian u8 length string", async () => {
+  const data = await u8LenStr(Endian.Little).encode(testStr);
+  assertEquals(data.length, 1 + testStrByteLength);
+  assertEquals(await u8(Endian.Little).decode(data), testStrByteLength);
+  const cursor = new Cursor(0);
+  assertEquals(await u8LenStr(Endian.Little).decode(data, cursor), testStr);
+  assertEquals(cursor.index, data.length);
+});
+
+Deno.test("little endian u16 length string", async () => {
+  const data = await u16LenStr(Endian.Little).encode(testStr);
+  assertEquals(data.length, 2 + testStrByteLength);
+  assertEquals(await u16(Endian.Little).decode(data), testStrByteLength);
+  const cursor = new Cursor(0);
+  assertEquals(await u16LenStr(Endian.Little).decode(data, cursor), testStr);
+  assertEquals(cursor.index, data.length);
+});
+
+Deno.test("little endian u32 length string", async () => {
+  const data = await u32LenStr(Endian.Little).encode(testStr);
+  assertEquals(data.length, 4 + testStrByteLength);
+  assertEquals(await u32(Endian.Little).decode(data), testStrByteLength);
+  const cursor = new Cursor(0);
+  assertEquals(await u32LenStr(Endian.Little).decode(data, cursor), testStr);
   assertEquals(cursor.index, data.length);
 });
 
