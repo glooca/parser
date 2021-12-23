@@ -2,7 +2,7 @@ import {
   assertEquals,
   assertRejects,
 } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import { arr, Cursor, u16, u32, u8 } from "../parser.ts";
+import { arr, Cursor, u16, u32, u8 } from "../mod.ts";
 
 Deno.test("array of u8", async () => {
   const testArrays = [[], [0], [0, 6, 255, 54]];

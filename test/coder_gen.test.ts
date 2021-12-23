@@ -7,7 +7,7 @@ import {
   u16,
   u16LenStr,
   u32,
-} from "../parser.ts";
+} from "../mod.ts";
 
 Deno.test("interface coder factory generator", async () => {
   interface TestItem {

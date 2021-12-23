@@ -1,19 +1,23 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import { i8, i16, i32, Endian } from "../parser.ts";
+import { i8, i16, i32, Endian, Cursor } from "../mod.ts";
 
 Deno.test("int 8", () => {
   [-128, -115, -75, 24, 61, 114, 127].forEach(async (val) => {
     const encoded = await i8().encode(val);
-    const decoded = await i8().decode(encoded);
+    const cursor = new Cursor();
+    const decoded = await i8().decode(encoded, cursor);
     assertEquals(decoded, val);
+    assertEquals(cursor.index, 1);
   });
 });
 
 Deno.test("int 16", () => {
   [-32768, -29954, -24254, -18123, -5428, 17497, 32767].forEach(async (val) => {
     const encoded = await i16().encode(val);
-    const decoded = await i16().decode(encoded);
+    const cursor = new Cursor();
+    const decoded = await i16().decode(encoded, cursor);
     assertEquals(decoded, val);
+    assertEquals(cursor.index, 2);
   });
 });
 
@@ -23,24 +27,30 @@ Deno.test("int 32", () => {
     2147483647,
   ].forEach(async (val) => {
     const encoded = await i32().encode(val);
-    const decoded = await i32().decode(encoded);
+    const cursor = new Cursor();
+    const decoded = await i32().decode(encoded, cursor);
     assertEquals(decoded, val);
+    assertEquals(cursor.index, 4);
   });
 });
 
 Deno.test("int 8 little endian", () => {
   [-128, -115, -75, 24, 61, 114, 127].forEach(async (val) => {
     const encoded = await i8(Endian.Little).encode(val);
-    const decoded = await i8(Endian.Little).decode(encoded);
+    const cursor = new Cursor();
+    const decoded = await i8(Endian.Little).decode(encoded, cursor);
     assertEquals(decoded, val);
+    assertEquals(cursor.index, 1);
   });
 });
 
 Deno.test("int 16 little endian", () => {
   [-32768, -29954, -24254, -18123, -5428, 17497, 32767].forEach(async (val) => {
     const encoded = await i16(Endian.Little).encode(val);
-    const decoded = await i16(Endian.Little).decode(encoded);
+    const cursor = new Cursor();
+    const decoded = await i16(Endian.Little).decode(encoded, cursor);
     assertEquals(decoded, val);
+    assertEquals(cursor.index, 2);
   });
 });
 
@@ -50,7 +60,9 @@ Deno.test("int 32 little endian", () => {
     2147483647,
   ].forEach(async (val) => {
     const encoded = await i32(Endian.Little).encode(val);
-    const decoded = await i32(Endian.Little).decode(encoded);
+    const cursor = new Cursor();
+    const decoded = await i32(Endian.Little).decode(encoded, cursor);
     assertEquals(decoded, val);
+    assertEquals(cursor.index, 4);
   });
 });

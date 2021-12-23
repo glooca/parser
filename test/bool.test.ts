@@ -2,7 +2,7 @@ import {
   assertEquals,
   assertRejects,
 } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import { bool, Cursor } from "../parser.ts";
+import { bool, Cursor } from "../mod.ts";
 
 [true, false].forEach((boolValue) => {
   Deno.test(`boolean ${boolValue}`, async () => {

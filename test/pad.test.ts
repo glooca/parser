@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import { Cursor, pad } from "../parser.ts";
+import { Cursor, pad } from "../mod.ts";
 
 Deno.test("padding", async () => {
   const length = 5;
