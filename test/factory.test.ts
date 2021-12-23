@@ -28,11 +28,13 @@ Deno.test("decoder factory", async () => {
     ...[0, 0], // pad
     ...[84, 101, 115, 116, 0], // nullTemrStr
   ]);
-  const decoded = await testItemDecoder(data);
+  const cursor = new Cursor();
+  const decoded = await testItemDecoder(data, cursor);
   assertEquals(decoded, {
     myProp: 544945664,
     stringData: "Test",
   });
+  assertEquals(cursor.index, data.length);
 });
 
 Deno.test("typed decoder factory", async () => {
@@ -54,8 +56,10 @@ Deno.test("typed decoder factory", async () => {
     ...[0, 0], // pad
     ...[84, 101, 115, 116, 0], // nullTemrStr
   ]);
-  const decoded = await testItemDecoder(data);
+  const cursor = new Cursor();
+  const decoded = await testItemDecoder(data, cursor);
   assertEquals(decoded, new TestItem(544945664, "Test"));
+  assertEquals(cursor.index, data.length);
 });
 
 Deno.test("encoder factory", async () => {

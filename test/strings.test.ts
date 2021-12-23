@@ -22,9 +22,20 @@ const testStr =
 const testStrByteLength = new TextEncoder().encode(testStr).length;
 
 Deno.test("known byte length string", async () => {
-  assertRejects(async () => {
-    await str(testStrByteLength - 1).encode(testStr);
-  });
+  assertRejects(
+    async () => {
+      await str(0).encode(testStr);
+    },
+    Error,
+    `Failed to store text "${testStr}" in 0 bytes`
+  );
+  assertRejects(
+    async () => {
+      await str(1).encode(testStr);
+    },
+    Error,
+    `Failed to store text "${testStr}" in 1 byte`
+  );
   const data = await str(testStrByteLength).encode(testStr);
   assertEquals(data.length, testStrByteLength);
   const cursor = new Cursor(0);

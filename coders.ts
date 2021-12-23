@@ -31,7 +31,7 @@ export function raw(byteLength: number): Coder<Uint8Array> {
       if (data.byteLength != byteLength) {
         throw new Error(
           `Failed to store ${data} in ${byteLength} byte${
-            byteLength > 1 ? "s" : ""
+            byteLength !== 1 ? "s" : ""
           }`
         );
       }
@@ -196,7 +196,7 @@ export function str(byteLength: number): Coder<string> {
       if (encoded.byteLength != byteLength) {
         throw new Error(
           `Failed to store text "${data}" in ${byteLength} byte${
-            byteLength > 1 ? "s" : ""
+            byteLength !== 1 ? "s" : ""
           }`
         );
       }
