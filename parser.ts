@@ -5,6 +5,8 @@ export enum Endian {
   Big,
 }
 
+const defaultEndian = Endian.Big;
+
 export class Cursor {
   index: number;
   constructor(index?: number) {
@@ -61,7 +63,7 @@ export function decoderFactory<T>(
     for (let i = 0; i < coders.length; i++) {
       let [name, coder] = coders[i];
       if (typeof coder === "function") {
-        const res = coder(retVal as T);
+        const res = coder(retVal);
         if (res == null) continue;
         coder = res;
       }
@@ -208,13 +210,13 @@ const numData = {
     set: (dv: DataView) => dv.setFloat64.bind(dv),
   },
 };
-function numCoder(numType: NumType, defaultEndian: Endian) {
+function numCoder(numType: NumType) {
   return (endian = defaultEndian): Coder<number> => {
     return {
       decode(data, cursor = new Cursor()) {
         const { len, get } = numData[numType];
         const dv = new DataView(data.buffer);
-        const num = get(dv)(cursor.index);
+        const num = get(dv)(cursor.index, endian === Endian.Little);
         cursor.index += len;
         return Promise.resolve(num);
       },
@@ -228,16 +230,16 @@ function numCoder(numType: NumType, defaultEndian: Endian) {
   };
 }
 
-export const u8 = numCoder(NumType.u8, Endian.Big);
-export const u16 = numCoder(NumType.u16, Endian.Big);
-export const u32 = numCoder(NumType.u32, Endian.Big);
+export const u8 = numCoder(NumType.u8);
+export const u16 = numCoder(NumType.u16);
+export const u32 = numCoder(NumType.u32);
 
-export const i8 = numCoder(NumType.i8, Endian.Big);
-export const i16 = numCoder(NumType.i16, Endian.Big);
-export const i32 = numCoder(NumType.i32, Endian.Big);
+export const i8 = numCoder(NumType.i8);
+export const i16 = numCoder(NumType.i16);
+export const i32 = numCoder(NumType.i32);
 
-export const f32 = numCoder(NumType.f32, Endian.Big);
-export const f64 = numCoder(NumType.f64, Endian.Big);
+export const f32 = numCoder(NumType.f32);
+export const f64 = numCoder(NumType.f64);
 
 export function arr<T>(length: number, coder: Coder<T>): Coder<T[]> {
   return {
@@ -279,11 +281,11 @@ function nLenArrCoder<T>(length: Coder<number>, coder: Coder<T>): Coder<T[]> {
   };
 }
 
-export const u8LenArr = <T>(coder: Coder<T>, endian = Endian.Big) =>
+export const u8LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
   nLenArrCoder(u8(endian), coder);
-export const u16LenArr = <T>(coder: Coder<T>, endian = Endian.Big) =>
+export const u16LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
   nLenArrCoder(u16(endian), coder);
-export const u32LenArr = <T>(coder: Coder<T>, endian = Endian.Big) =>
+export const u32LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
   nLenArrCoder(u32(endian), coder);
 
 export const bool: Coder<boolean> = {
@@ -334,9 +336,9 @@ function nLenStrCoder(length: Coder<number>): Coder<string> {
   };
 }
 
-export const u8LenStr = (endian = Endian.Big) => nLenStrCoder(u8(endian));
-export const u16LenStr = (endian = Endian.Big) => nLenStrCoder(u16(endian));
-export const u32LenStr = (endian = Endian.Big) => nLenStrCoder(u32(endian));
+export const u8LenStr = (endian = defaultEndian) => nLenStrCoder(u8(endian));
+export const u16LenStr = (endian = defaultEndian) => nLenStrCoder(u16(endian));
+export const u32LenStr = (endian = defaultEndian) => nLenStrCoder(u32(endian));
 
 export const nullTermStr: Coder<string> = {
   decode(data, cursor = new Cursor(0)) {
