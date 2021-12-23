@@ -13,7 +13,7 @@ import {
   u32LenStr,
   u8,
   u8LenStr,
-} from "../parser.ts";
+} from "../mod.ts";
 
 const testStr =
   "Hello, world! " +

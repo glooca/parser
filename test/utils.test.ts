@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import { asyncMergeUint8Arrays, mergeUint8Arrays } from "../utils.ts";
+import { asyncMergeUint8Arrays, mergeUint8Arrays } from "../mod.ts";
 
 // const numbers = [
 //   [0, [0]],

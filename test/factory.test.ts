@@ -11,7 +11,7 @@ import {
   u16,
   u16LenStr,
   u32,
-} from "../parser.ts";
+} from "../mod.ts";
 
 Deno.test("decoder factory", async () => {
   interface TestItem {

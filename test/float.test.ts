@@ -2,7 +2,7 @@ import {
   assert,
   assertEquals,
 } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import { Endian, f32, f64 } from "../parser.ts";
+import { Endian, f32, f64 } from "../mod.ts";
 
 Deno.test("float 32", async () => {
   const encoded = await f32().encode(Math.PI);

@@ -12,7 +12,7 @@ deno test
 
 # :tada: Getting started
 
-Import what you need from `parser.ts`
+Import what you need from `mod.ts`
 
 ## :pencil: Docs
 
@@ -23,7 +23,7 @@ Import what you need from `parser.ts`
 ## :pencil2: Example
 
 ```ts
-import { coderFactory, nullTermStr, pad, u32 } from "./parser.ts";
+import { coderFactory, nullTermStr, pad, u32 } from "./mod.ts";
 
 interface MyInterface {
   someProp: number;

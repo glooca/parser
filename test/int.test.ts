@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import { i8, i16, i32, Endian } from "../parser.ts";
+import { i8, i16, i32, Endian } from "../mod.ts";
 
 Deno.test("int 8", () => {
   [-128, -115, -75, 24, 61, 114, 127].forEach(async (val) => {

@@ -1,12 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
-import {
-  Cursor,
-  Endian,
-  f64,
-  u16LenArr,
-  u32LenArr,
-  u8LenArr,
-} from "../parser.ts";
+import { Cursor, Endian, f64, u16LenArr, u32LenArr, u8LenArr } from "../mod.ts";
 
 Deno.test("u8 length array of f64", async () => {
   const testArrays = [
