@@ -1,9 +1,42 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
 import { i8, i16, i32, Endian, Cursor } from "../mod.ts";
 
+const int8Data = [
+  { val: -128, enc: [128] },
+  { val: -115, enc: [141] },
+  { val: -75, enc: [181] },
+  { val: 24, enc: [24] },
+  { val: 61, enc: [61] },
+  { val: 114, enc: [114] },
+  { val: 127, enc: [127] },
+];
+
+const int16Data = [
+  { val: -32768, enc: [128, 0] },
+  { val: -29954, enc: [138, 254] },
+  { val: -24254, enc: [161, 66] },
+  { val: -18123, enc: [185, 53] },
+  { val: -5428, enc: [234, 204] },
+  { val: 17497, enc: [68, 89] },
+  { val: 32767, enc: [127, 255] },
+];
+
+const int32Data = [
+  { val: -2147483648, enc: [128, 0, 0, 0] },
+  { val: -2147475134, enc: [128, 0, 33, 66] },
+  { val: -1178100476, enc: [185, 199, 157, 4] },
+  { val: -105825461, enc: [249, 177, 59, 75] },
+  { val: -1, enc: [255, 255, 255, 255] },
+  { val: 0, enc: [0, 0, 0, 0] },
+  { val: 703430847, enc: [41, 237, 128, 191] },
+  { val: 1670789078, enc: [99, 150, 55, 214] },
+  { val: 2147483647, enc: [127, 255, 255, 255] },
+];
+
 Deno.test("int 8", () => {
-  [-128, -115, -75, 24, 61, 114, 127].forEach(async (val) => {
+  int8Data.forEach(async ({ val, enc }) => {
     const encoded = await i8().encode(val);
+    assertEquals(encoded, new Uint8Array(enc));
     const cursor = new Cursor();
     const decoded = await i8().decode(encoded, cursor);
     assertEquals(decoded, val);
@@ -12,8 +45,9 @@ Deno.test("int 8", () => {
 });
 
 Deno.test("int 16", () => {
-  [-32768, -29954, -24254, -18123, -5428, 17497, 32767].forEach(async (val) => {
+  int16Data.forEach(async ({ val, enc }) => {
     const encoded = await i16().encode(val);
+    assertEquals(encoded, new Uint8Array(enc));
     const cursor = new Cursor();
     const decoded = await i16().decode(encoded, cursor);
     assertEquals(decoded, val);
@@ -22,11 +56,9 @@ Deno.test("int 16", () => {
 });
 
 Deno.test("int 32", () => {
-  [
-    -2147483648, -2147475134, -1178100476, -105825461, 703430847, 1670789078,
-    2147483647,
-  ].forEach(async (val) => {
+  int32Data.forEach(async ({ val, enc }) => {
     const encoded = await i32().encode(val);
+    assertEquals(encoded, new Uint8Array(enc));
     const cursor = new Cursor();
     const decoded = await i32().decode(encoded, cursor);
     assertEquals(decoded, val);
@@ -35,8 +67,9 @@ Deno.test("int 32", () => {
 });
 
 Deno.test("int 8 little endian", () => {
-  [-128, -115, -75, 24, 61, 114, 127].forEach(async (val) => {
+  int8Data.forEach(async ({ val, enc }) => {
     const encoded = await i8(Endian.Little).encode(val);
+    assertEquals(encoded, new Uint8Array(enc.reverse()));
     const cursor = new Cursor();
     const decoded = await i8(Endian.Little).decode(encoded, cursor);
     assertEquals(decoded, val);
@@ -45,8 +78,9 @@ Deno.test("int 8 little endian", () => {
 });
 
 Deno.test("int 16 little endian", () => {
-  [-32768, -29954, -24254, -18123, -5428, 17497, 32767].forEach(async (val) => {
+  int16Data.forEach(async ({ val, enc }) => {
     const encoded = await i16(Endian.Little).encode(val);
+    assertEquals(encoded, new Uint8Array(enc.reverse()));
     const cursor = new Cursor();
     const decoded = await i16(Endian.Little).decode(encoded, cursor);
     assertEquals(decoded, val);
@@ -55,11 +89,9 @@ Deno.test("int 16 little endian", () => {
 });
 
 Deno.test("int 32 little endian", () => {
-  [
-    -2147483648, -2147475134, -1178100476, -105825461, 703430847, 1670789078,
-    2147483647,
-  ].forEach(async (val) => {
+  int32Data.forEach(async ({ val, enc }) => {
     const encoded = await i32(Endian.Little).encode(val);
+    assertEquals(encoded, new Uint8Array(enc.reverse()));
     const cursor = new Cursor();
     const decoded = await i32(Endian.Little).decode(encoded, cursor);
     assertEquals(decoded, val);
