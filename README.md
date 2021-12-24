@@ -16,7 +16,7 @@ Import what you need from `mod.ts`
 
 ## :pencil: Docs
 
-Hosted at deno.land https://doc.deno.land/https://deno.land/x/binary_parser@0.1.0-pre.1/mod.ts
+Hosted at deno.land https://doc.deno.land/https://deno.land/x/binary_parser@1.0.0/mod.ts
 
 ## :pencil2: Example
 
@@ -26,7 +26,7 @@ import {
   nullTermStr,
   pad,
   u32,
-} from "https://deno.land/x/binary_parser@0.1.0-pre.1/mod.ts";
+} from "https://deno.land/x/binary_parser@1.0.0/mod.ts";
 
 interface MyInterface {
   someProp: number;
