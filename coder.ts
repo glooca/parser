@@ -17,13 +17,13 @@ export type Encoder<T> = (data: T) => Promise<Uint8Array>;
 
 /**
  * Describes the methods required for decoding and encoding
- * ## Usage
+ * # Usage
  * ```ts
- * const myData: MyData /* = ... *\/;
- * const myCoder: Coder<MyData> /* = ... *\/;
+ * const myData: MyData = ...;
+ * const myCoder: Coder<MyData> = ...;
  * const encoded = await myCoder.encode(myData);
  * const decoded = await myCoder.decode(encoded);
- * assertEqual(myData, decoded);
+ * // assertEqual(myData, decoded);
  * ```
  */
 export interface Coder<T> {

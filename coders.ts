@@ -9,8 +9,7 @@ export enum Endian {
 const defaultEndian = Endian.Big;
 
 /**
- * @param {number} byteLength amount to advance the cursor
- * @returns {Coder<void>}
+ * When encoding advances cursor `byteLength` bytes, when decoding returns a null byte array with `byteLength`
  */
 export function pad(byteLength: number): Coder<void> {
   return {
@@ -25,8 +24,7 @@ export function pad(byteLength: number): Coder<void> {
 }
 
 /**
- * @param {number} byteLength bytes to read into a Uint8Array
- * @returns {Coder<Uint8Array>}
+ * Reads `byteLength` bytes into a `Uint8Array`
  */
 export function raw(byteLength: number): Coder<Uint8Array> {
   return {
@@ -122,59 +120,43 @@ function numCoder(numType: NumType) {
 
 /**
  * Reads a byte as an unsigned 8 bit integer
- * @type {Coder<number>}
  */
-export const u8 = numCoder(NumType.u8)();
+export const u8: Coder<number> = numCoder(NumType.u8)();
 /**
  * Reads 2 bytes as an unsigned 16 bit integer
- * @param {Endian | undefined} endian
- * @returns {Coder<number>}
  */
-export const u16 = numCoder(NumType.u16);
+export const u16: (endian?: Endian) => Coder<number> = numCoder(NumType.u16);
 /**
  * Reads 4 bytes as an unsigned 32 bit integer
- * @param {Endian | undefined} endian
- * @returns {Coder<number>}
  */
-export const u32 = numCoder(NumType.u32);
+export const u32: (endian?: Endian) => Coder<number> = numCoder(NumType.u32);
 
 /**
  * Reads a byte as a signed 8 bit integer
- * @type {Coder<number>}
  */
-export const i8 = numCoder(NumType.i8)();
+export const i8: Coder<number> = numCoder(NumType.i8)();
 /**
  * Reads 2 bytes as a signed 16 bit integer
- * @param {Endian | undefined} endian
- * @returns {Coder<number>}
  */
-export const i16 = numCoder(NumType.i16);
+export const i16: (endian?: Endian) => Coder<number> = numCoder(NumType.i16);
 /**
  * Reads 4 bytes as a signed 32 bit integer
- * @param {Endian | undefined} endian
- * @returns {Coder<number>}
  */
-export const i32 = numCoder(NumType.i32);
+export const i32: (endian?: Endian) => Coder<number> = numCoder(NumType.i32);
 
 /**
  * Reads 4 bytes as a 32 bit floating point number
- * @param {Endian | undefined} endian
- * @returns {Coder<number>}
  */
-export const f32 = numCoder(NumType.f32);
+export const f32: (endian?: Endian) => Coder<number> = numCoder(NumType.f32);
 /**
  * Reads 8 bytes as a 64 bit floating point number
- * @param {Endian | undefined} endian
- * @returns {Coder<number>}
  */
-export const f64 = numCoder(NumType.f64);
+export const f64: (endian?: Endian) => Coder<number> = numCoder(NumType.f64);
 
 /**
  * Reads `length` amount of elements with the specified `coder` as an array
+ *
  * When encoding `throws` if the data doesn't contain `length` elements
- * @param {number} length
- * @param {Coder<T>} coder
- * @returns {Coder<T[]>}
  */
 export function arr<T>(length: number, coder: Coder<T>): Coder<T[]> {
   return {
@@ -217,31 +199,27 @@ function nLenArrCoder<T>(length: Coder<number>, coder: Coder<T>): Coder<T[]> {
 }
 
 /**
- * Reads a {@link u8}, then reads its number of specified coders as an array
- * @param {Coder<T>} coder
- * @returns {Coder<T[]>}
+ * Reads a `u8`, then reads its number of specified coders as an array
  */
-export const u8LenArr = <T>(coder: Coder<T>) => nLenArrCoder(u8, coder);
+export const u8LenArr: <T>(coder: Coder<T>) => Coder<T[]> = (coder) =>
+  nLenArrCoder(u8, coder);
 /**
- * Reads a {@link u16}, then reads its number of specified coders as an array
- * @param {Coder<T>} coder
- * @param {Endian | undefined} endian
- * @returns {Coder<T[]>}
+ * Reads a `u16`, then reads its number of specified coders as an array
  */
-export const u16LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
-  nLenArrCoder(u16(endian), coder);
+export const u16LenArr: <T>(coder: Coder<T>, endian?: Endian) => Coder<T[]> = (
+  coder,
+  endian = defaultEndian
+) => nLenArrCoder(u16(endian), coder);
 /**
- * Reads a {@link u32}, then reads its number of specified coders as an array
- * @param {Coder<T>} coder
- * @param {Endian | undefined} endian
- * @returns {Coder<T[]>}
+ * Reads a `u32`, then reads its number of specified coders as an array
  */
-export const u32LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
-  nLenArrCoder(u32(endian), coder);
+export const u32LenArr: <T>(coder: Coder<T>, endian?: Endian) => Coder<T[]> = (
+  coder,
+  endian = defaultEndian
+) => nLenArrCoder(u32(endian), coder);
 
 /**
  * Reads a byte as a boolean value 0x00 being false and 0x01 being true
- * @type {Coder<boolean>}
  */
 export const bool: Coder<boolean> = {
   async decode(data, cursor = new Cursor()) {
@@ -257,9 +235,8 @@ export const bool: Coder<boolean> = {
 
 /**
  * Reads a fixed `byteLength` string
+ *
  * When encoding `throws` if the `byteLength` doesn't match the data
- * @param {number} byteLength
- * @returns {Coder<string>}
  */
 export function str(byteLength: number): Coder<string> {
   return {
@@ -298,26 +275,24 @@ function nLenStrCoder(length: Coder<number>): Coder<string> {
 }
 
 /**
- * Reads a {@link u8}, then reads its number of bytes as a string
- * @type {Coder<string>}
+ * Reads a `u8`, then reads its number of bytes as a string
  */
-export const u8LenStr = nLenStrCoder(u8);
+export const u8LenStr: Coder<string> = nLenStrCoder(u8);
 /**
- * Reads a {@link u16}, then reads its number of bytes as a string
- * @param {Endian | undefined} endian
- * @returns {Coder<string>}
+ * Reads a `u16`, then reads its number of bytes as a string
  */
-export const u16LenStr = (endian = defaultEndian) => nLenStrCoder(u16(endian));
+export const u16LenStr: (endian?: Endian) => Coder<string> = (
+  endian = defaultEndian
+) => nLenStrCoder(u16(endian));
 /**
- * Reads a {@link u32}, then reads its number of bytes as a string
- * @param {Endian | undefined} endian
- * @returns {Coder<string>}
+ * Reads a `u32`, then reads its number of bytes as a string
  */
-export const u32LenStr = (endian = defaultEndian) => nLenStrCoder(u32(endian));
+export const u32LenStr: (endian?: Endian) => Coder<string> = (
+  endian = defaultEndian
+) => nLenStrCoder(u32(endian));
 
 /**
  * Reads bytes until a null byte or the end of the data is reached as string
- * @type {Coder<string>}
  */
 export const nullTermStr: Coder<string> = {
   decode(data, cursor = new Cursor(0)) {
