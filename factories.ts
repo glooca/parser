@@ -1,21 +1,37 @@
 import { Coder, Cursor, Decoder, Encoder } from "./coder.ts";
 import { asyncMergeUint8Arrays } from "./utils.ts";
 
-export type CoderGenerator<T, Y> = (instance: Partial<T>) => Coder<Y>;
-type CoderInstance<T, Y> = Coder<Y> | CoderGenerator<T, Y>;
+export type CoderGenerator<T, Y> =
+  | Coder<Y>
+  | ((instance: Partial<T>) => Coder<Y> | void);
 
-type RegisterCoder<T> = <J extends keyof T>(
-  coder:
-    | CoderInstance<T, T[J]>
-    | CoderInstance<T, void>
-    | ((instance: Partial<T>) => void),
-  name?: J
+/**
+ * Describes the binary layout
+ *
+ * # Usage
+ *
+ * ```ts
+ * interface MyInterface {
+ *   someProp: number;
+ *   anotherProp: string;
+ * }
+ * const myInterfaceCodingFormat: CodingFormat<MyInterface> = (r) => {
+ *   r(u32(), "someProp");
+ *   r(pad(2));
+ *   r(nullTermStr, "anotherProp");
+ * };
+ * ```
+ */
+export type CodingFormat<T> = (
+  register: <J extends keyof T>(
+    coder: CoderGenerator<T, T[J]> | CoderGenerator<T, void>,
+    name?: J
+  ) => void
 ) => void;
-export type CodingFormat<T> = (register: RegisterCoder<T>) => void;
 
 type CoderList<T> = [
   keyof T | undefined,
-  CoderInstance<T, T[keyof T] | void> | ((instance: Partial<T>) => void)
+  CoderGenerator<T, T[keyof T] | void> | ((instance: Partial<T>) => void)
 ][];
 
 function parseCoderList<T>(
@@ -27,7 +43,6 @@ function parseCoderList<T>(
     coders.push([
       name,
       coder as
-        | Coder<void | T[keyof T]>
         | CoderGenerator<T, void | T[keyof T]>
         | ((instance: Partial<T>) => void),
     ]);
@@ -35,6 +50,20 @@ function parseCoderList<T>(
   return coders;
 }
 
+/**
+ * Creates a {@link Decoder} for a given {@link CodingFormat}
+ *
+ * # Usage
+ *
+ * ```ts
+ * const myCoder: Coder<MyInterface> = {
+ *   decode: decoderFactory(myInterfaceCodingFormat),
+ *   encode: encoderFactory(myInterfaceCodingFormat),
+ * };
+ * ```
+ * @param {CodingFormat<T>} data
+ * @returns {Decoder<T>}
+ */
 export function decoderFactory<T>(
   data: CodingFormat<T> | CoderList<T>
 ): Decoder<T> {
@@ -55,6 +84,26 @@ export function decoderFactory<T>(
   };
 }
 
+/**
+ * Creates a {@link Decoder} for a given {@link CodingFormat}
+ * Assigns the decoded value to a new object with type `type`
+ *
+ * # Usage
+ *
+ * ```ts
+ * const myClassCodingFormat: CodingFormat<MyClass> = (r) => {
+ *   r(nullTermStr, "param");
+ * };
+ * class MyClass implements Coder<MyClass> {
+ *   param = "Hello, World!";
+ *   decode = typedDecoderFactory(MyClass, myClassCodingFormat);
+ *   encode = encoderFactory(myClassCodingFormat);
+ * }
+ * ```
+ * @param {new (...args: any) => T} type class
+ * @param {CodingFormat<T>} data
+ * @returns {Decoder<T>}
+ */
 export function typedDecoderFactory<T>(
   // deno-lint-ignore no-explicit-any
   type: new (...args: any) => T,
@@ -69,6 +118,20 @@ export function typedDecoderFactory<T>(
   };
 }
 
+/**
+ * Creates a {@link Encoder} for a given {@link CodingFormat}
+ *
+ * # Usage
+ *
+ * ```ts
+ * const myCoder: Coder<MyInterface> = {
+ *   decode: decoderFactory(myInterfaceCodingFormat),
+ *   encode: encoderFactory(myInterfaceCodingFormat),
+ * };
+ * ```
+ * @param {CodingFormat<T>} data
+ * @returns {Encoder<T>}
+ */
 export function encoderFactory<T>(
   data: CodingFormat<T> | CoderList<T>
 ): Encoder<T> {
@@ -87,6 +150,17 @@ export function encoderFactory<T>(
   };
 }
 
+/**
+ * Creates a {@link Coder} for a given {@link CodingFormat}
+ *
+ * # Usage
+ *
+ * ```ts
+ * const myCoder = coderFactory(myInterfaceCodingFormat);
+ * ```
+ * @param {CodingFormat<T>} format
+ * @returns {Coder<T>}
+ */
 export function coderFactory<T>(format: CodingFormat<T>): Coder<T> {
   const coders = parseCoderList(format);
   return {
@@ -95,6 +169,21 @@ export function coderFactory<T>(format: CodingFormat<T>): Coder<T> {
   };
 }
 
+/**
+ * Creates a {@link Coder} for a given {@link CodingFormat}
+ * Assigns the decoded value to a new object with type `type`
+ *
+ * @see {@link typedDecoderFactory} if you want to implement {@link Coder} for a class
+ *
+ * # Usage
+ *
+ * ```ts
+ * const myCoder = typedCoderFactory(myClassCodingFormat);
+ * ```
+ * @param {new (...args: any) => T} type class
+ * @param {CodingFormat<T>} format
+ * @returns {Coder<T>}
+ */
 export function typedCoderFactory<T>(
   // deno-lint-ignore no-explicit-any
   type: new (...args: any) => T,

@@ -23,10 +23,10 @@ const uint32Data = [
 
 Deno.test("uint 8", () => {
   [0, 13, 53, 152, 189, 242, 255].forEach(async (val) => {
-    const encoded = await u8().encode(val);
+    const encoded = await u8.encode(val);
     assertEquals(encoded, new Uint8Array([val]));
     const cursor = new Cursor();
-    const decoded = await u8().decode(encoded, cursor);
+    const decoded = await u8.decode(encoded, cursor);
     assertEquals(decoded, val);
     assertEquals(cursor.index, 1);
   });
@@ -51,17 +51,6 @@ Deno.test("uint 32", () => {
     const decoded = await u32().decode(encoded, cursor);
     assertEquals(decoded, val);
     assertEquals(cursor.index, 4);
-  });
-});
-
-Deno.test("uint 8 little endian", () => {
-  [0, 13, 53, 152, 189, 242, 255].forEach(async (val) => {
-    const encoded = await u8(Endian.Little).encode(val);
-    assertEquals(encoded, new Uint8Array([val]));
-    const cursor = new Cursor();
-    const decoded = await u8(Endian.Little).decode(encoded, cursor);
-    assertEquals(decoded, val);
-    assertEquals(cursor.index, 1);
   });
 });
 

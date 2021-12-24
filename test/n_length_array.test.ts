@@ -52,19 +52,6 @@ Deno.test("u32 length array of f64", () => {
   });
 });
 
-Deno.test("little endian u8 length array of f64", () => {
-  f64ArrData.forEach(async ({ val, enc, l_u8 }) => {
-    const data = await u8LenArr(f64(), Endian.Little).encode(val);
-    assertEquals(data, new Uint8Array([...l_u8.reverse(), ...enc]));
-    const cursor = new Cursor(0);
-    assertEquals(
-      await u8LenArr(f64(), Endian.Little).decode(data, cursor),
-      val
-    );
-    assertEquals(cursor.index, data.length);
-  });
-});
-
 Deno.test("little endian u16 length array of f64", () => {
   f64ArrData.forEach(async ({ val, enc, l_u16 }) => {
     const data = await u16LenArr(f64(), Endian.Little).encode(val);

@@ -9,12 +9,12 @@ Deno.test("array of u8", async () => {
   for (let i = 0; i < testArrays.length; i++) {
     const dataArr = testArrays[i];
     assertRejects(async () => {
-      await arr(dataArr.length + 1, u8()).encode(dataArr);
+      await arr(dataArr.length + 1, u8).encode(dataArr);
     });
-    const data = await arr(dataArr.length, u8()).encode(dataArr);
+    const data = await arr(dataArr.length, u8).encode(dataArr);
     assertEquals(data.length, 1 * dataArr.length);
     const cursor = new Cursor(0);
-    assertEquals(await arr(dataArr.length, u8()).decode(data, cursor), dataArr);
+    assertEquals(await arr(dataArr.length, u8).decode(data, cursor), dataArr);
     assertEquals(cursor.index, data.length);
   }
 });

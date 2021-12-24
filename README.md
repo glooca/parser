@@ -16,14 +16,17 @@ Import what you need from `mod.ts`
 
 ## :pencil: Docs
 
-- [Coder factory functions](docs/coder_factories.md)
-- [Included coders](docs/included_coders.md)
-- [Types](docs/types.md)
+Hosted at deno.land https://doc.deno.land/https://deno.land/x/binary_parser@0.1.0-pre.1/mod.ts
 
 ## :pencil2: Example
 
 ```ts
-import { coderFactory, nullTermStr, pad, u32 } from "./mod.ts";
+import {
+  coderFactory,
+  nullTermStr,
+  pad,
+  u32,
+} from "https://deno.land/x/binary_parser@0.1.0-pre.1/mod.ts";
 
 interface MyInterface {
   someProp: number;
@@ -39,5 +42,5 @@ const myData: MyInterface = { someProp: 420, anotherProp: "Hello, World!" };
 const encoded: Uint8Array = await myCoder.encode(myData);
 const decoded: MyInterface = await myCoder.decode(encoded);
 
-assertEqual(myData, decoded);
+// assertEqual(myData, decoded);
 ```

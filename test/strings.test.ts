@@ -45,14 +45,14 @@ Deno.test("known byte length string", async () => {
 });
 
 Deno.test("u8 length string", async () => {
-  const data = await u8LenStr().encode(testStr);
+  const data = await u8LenStr.encode(testStr);
   assertEquals(
     data,
     mergeUint8Arrays(new Uint8Array([testStrBytes.length]), testStrBytes)
   );
-  assertEquals(await u8().decode(data), testStrBytes.length);
+  assertEquals(await u8.decode(data), testStrBytes.length);
   const cursor = new Cursor(0);
-  assertEquals(await u8LenStr().decode(data, cursor), testStr);
+  assertEquals(await u8LenStr.decode(data, cursor), testStr);
   assertEquals(cursor.index, data.length);
 });
 
@@ -80,18 +80,6 @@ Deno.test("u32 length string", async () => {
   assertEquals(await u32().decode(data), testStrBytes.length);
   const cursor = new Cursor(0);
   assertEquals(await u32LenStr().decode(data, cursor), testStr);
-  assertEquals(cursor.index, data.length);
-});
-
-Deno.test("little endian u8 length string", async () => {
-  const data = await u8LenStr(Endian.Little).encode(testStr);
-  assertEquals(
-    data,
-    mergeUint8Arrays(new Uint8Array([testStrBytes.length]), testStrBytes)
-  );
-  assertEquals(await u8(Endian.Little).decode(data), testStrBytes.length);
-  const cursor = new Cursor(0);
-  assertEquals(await u8LenStr(Endian.Little).decode(data, cursor), testStr);
   assertEquals(cursor.index, data.length);
 });
 
