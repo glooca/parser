@@ -112,11 +112,11 @@ function numCoder(numType: NumType) {
   };
 }
 
-export const u8 = numCoder(NumType.u8);
+export const u8 = numCoder(NumType.u8)();
 export const u16 = numCoder(NumType.u16);
 export const u32 = numCoder(NumType.u32);
 
-export const i8 = numCoder(NumType.i8);
+export const i8 = numCoder(NumType.i8)();
 export const i16 = numCoder(NumType.i16);
 export const i32 = numCoder(NumType.i32);
 
@@ -163,8 +163,7 @@ function nLenArrCoder<T>(length: Coder<number>, coder: Coder<T>): Coder<T[]> {
   };
 }
 
-export const u8LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
-  nLenArrCoder(u8(endian), coder);
+export const u8LenArr = <T>(coder: Coder<T>) => nLenArrCoder(u8, coder);
 export const u16LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
   nLenArrCoder(u16(endian), coder);
 export const u32LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
@@ -172,13 +171,13 @@ export const u32LenArr = <T>(coder: Coder<T>, endian = defaultEndian) =>
 
 export const bool: Coder<boolean> = {
   async decode(data, cursor = new Cursor()) {
-    const num = await u8().decode(data, cursor);
+    const num = await u8.decode(data, cursor);
     if (num != 0 && num != 1)
       throw new Error(`Failed to read value ${num} as boolean`);
     return num == 1;
   },
   encode(data) {
-    return u8().encode(data ? 1 : 0);
+    return u8.encode(data ? 1 : 0);
   },
 };
 
@@ -218,7 +217,7 @@ function nLenStrCoder(length: Coder<number>): Coder<string> {
   };
 }
 
-export const u8LenStr = (endian = defaultEndian) => nLenStrCoder(u8(endian));
+export const u8LenStr = nLenStrCoder(u8);
 export const u16LenStr = (endian = defaultEndian) => nLenStrCoder(u16(endian));
 export const u32LenStr = (endian = defaultEndian) => nLenStrCoder(u32(endian));
 

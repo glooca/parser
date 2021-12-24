@@ -1,21 +1,20 @@
 import { Coder, Cursor, Decoder, Encoder } from "./coder.ts";
 import { asyncMergeUint8Arrays } from "./utils.ts";
 
-export type CoderGenerator<T, Y> = (instance: Partial<T>) => Coder<Y>;
-type CoderInstance<T, Y> = Coder<Y> | CoderGenerator<T, Y>;
+export type CoderGenerator<T, Y> =
+  | Coder<Y>
+  | ((instance: Partial<T>) => Coder<Y> | void);
 
-type RegisterCoder<T> = <J extends keyof T>(
-  coder:
-    | CoderInstance<T, T[J]>
-    | CoderInstance<T, void>
-    | ((instance: Partial<T>) => void),
-  name?: J
+export type CodingFormat<T> = (
+  register: <J extends keyof T>(
+    coder: CoderGenerator<T, T[J]> | CoderGenerator<T, void>,
+    name?: J
+  ) => void
 ) => void;
-export type CodingFormat<T> = (register: RegisterCoder<T>) => void;
 
 type CoderList<T> = [
   keyof T | undefined,
-  CoderInstance<T, T[keyof T] | void> | ((instance: Partial<T>) => void)
+  CoderGenerator<T, T[keyof T] | void> | ((instance: Partial<T>) => void)
 ][];
 
 function parseCoderList<T>(
@@ -27,7 +26,6 @@ function parseCoderList<T>(
     coders.push([
       name,
       coder as
-        | Coder<void | T[keyof T]>
         | CoderGenerator<T, void | T[keyof T]>
         | ((instance: Partial<T>) => void),
     ]);

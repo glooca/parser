@@ -1,16 +1,6 @@
 import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
 import { i8, i16, i32, Endian, Cursor } from "../mod.ts";
 
-const int8Data = [
-  { val: -128, enc: [128] },
-  { val: -115, enc: [141] },
-  { val: -75, enc: [181] },
-  { val: 24, enc: [24] },
-  { val: 61, enc: [61] },
-  { val: 114, enc: [114] },
-  { val: 127, enc: [127] },
-];
-
 const int16Data = [
   { val: -32768, enc: [128, 0] },
   { val: -29954, enc: [138, 254] },
@@ -34,11 +24,11 @@ const int32Data = [
 ];
 
 Deno.test("int 8", () => {
-  int8Data.forEach(async ({ val, enc }) => {
-    const encoded = await i8().encode(val);
-    assertEquals(encoded, new Uint8Array(enc));
+  [-128, -115, -75, 24, 61, 114, 127].forEach(async (val) => {
+    const encoded = await i8.encode(val);
+    assertEquals(encoded, new Uint8Array([val]));
     const cursor = new Cursor();
-    const decoded = await i8().decode(encoded, cursor);
+    const decoded = await i8.decode(encoded, cursor);
     assertEquals(decoded, val);
     assertEquals(cursor.index, 1);
   });
@@ -63,17 +53,6 @@ Deno.test("int 32", () => {
     const decoded = await i32().decode(encoded, cursor);
     assertEquals(decoded, val);
     assertEquals(cursor.index, 4);
-  });
-});
-
-Deno.test("int 8 little endian", () => {
-  int8Data.forEach(async ({ val, enc }) => {
-    const encoded = await i8(Endian.Little).encode(val);
-    assertEquals(encoded, new Uint8Array(enc.reverse()));
-    const cursor = new Cursor();
-    const decoded = await i8(Endian.Little).decode(encoded, cursor);
-    assertEquals(decoded, val);
-    assertEquals(cursor.index, 1);
   });
 });
 
