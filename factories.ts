@@ -51,7 +51,7 @@ function parseCoderList<T>(
 }
 
 /**
- * Creates a {@link Decoder} for a given {@link CodingFormat}
+ * Creates a `Decoder` for a given `CodingFormat`
  *
  * # Usage
  *
@@ -61,8 +61,6 @@ function parseCoderList<T>(
  *   encode: encoderFactory(myInterfaceCodingFormat),
  * };
  * ```
- * @param {CodingFormat<T>} data
- * @returns {Decoder<T>}
  */
 export function decoderFactory<T>(
   data: CodingFormat<T> | CoderList<T>
@@ -85,7 +83,8 @@ export function decoderFactory<T>(
 }
 
 /**
- * Creates a {@link Decoder} for a given {@link CodingFormat}
+ * Creates a `Decoder` for a given `CodingFormat`
+ *
  * Assigns the decoded value to a new object with type `type`
  *
  * # Usage
@@ -100,9 +99,6 @@ export function decoderFactory<T>(
  *   encode = encoderFactory(myClassCodingFormat);
  * }
  * ```
- * @param {new (...args: any) => T} type class
- * @param {CodingFormat<T>} data
- * @returns {Decoder<T>}
  */
 export function typedDecoderFactory<T>(
   // deno-lint-ignore no-explicit-any
@@ -119,7 +115,7 @@ export function typedDecoderFactory<T>(
 }
 
 /**
- * Creates a {@link Encoder} for a given {@link CodingFormat}
+ * Creates an `Encoder` for a given `CodingFormat`
  *
  * # Usage
  *
@@ -129,8 +125,6 @@ export function typedDecoderFactory<T>(
  *   encode: encoderFactory(myInterfaceCodingFormat),
  * };
  * ```
- * @param {CodingFormat<T>} data
- * @returns {Encoder<T>}
  */
 export function encoderFactory<T>(
   data: CodingFormat<T> | CoderList<T>
@@ -151,15 +145,13 @@ export function encoderFactory<T>(
 }
 
 /**
- * Creates a {@link Coder} for a given {@link CodingFormat}
+ * Creates a `Coder` for a given `CodingFormat`
  *
  * # Usage
  *
  * ```ts
  * const myCoder = coderFactory(myInterfaceCodingFormat);
  * ```
- * @param {CodingFormat<T>} format
- * @returns {Coder<T>}
  */
 export function coderFactory<T>(format: CodingFormat<T>): Coder<T> {
   const coders = parseCoderList(format);
@@ -170,19 +162,16 @@ export function coderFactory<T>(format: CodingFormat<T>): Coder<T> {
 }
 
 /**
- * Creates a {@link Coder} for a given {@link CodingFormat}
+ * Creates a `Coder` for a given `CodingFormat`
  * Assigns the decoded value to a new object with type `type`
  *
- * @see {@link typedDecoderFactory} if you want to implement {@link Coder} for a class
+ * See `typedDecoderFactory` if you want to implement `Coder` for a class
  *
  * # Usage
  *
  * ```ts
  * const myCoder = typedCoderFactory(myClassCodingFormat);
  * ```
- * @param {new (...args: any) => T} type class
- * @param {CodingFormat<T>} format
- * @returns {Coder<T>}
  */
 export function typedCoderFactory<T>(
   // deno-lint-ignore no-explicit-any
