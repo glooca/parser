@@ -176,7 +176,7 @@ export function coderFactory<T>(format: CodingFormat<T>): Coder<T> {
  * # Usage
  *
  * ```ts
- * const myCoder = typedCoderFactory(myClassCodingFormat);
+ * const myCoder = typedCoderFactory(MyClass, myClassCodingFormat);
  * ```
  */
 export function typedCoderFactory<T>(
