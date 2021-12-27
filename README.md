@@ -1,4 +1,10 @@
-# Binary parser [![Deno](https://github.com/glooca/parser/actions/workflows/deno.yml/badge.svg?branch=main)](https://github.com/glooca/parser/actions/workflows/deno.yml) [![Coverage](https://img.shields.io/codecov/c/github/glooca/parser?logo=codecov)](https://app.codecov.io/gh/glooca/parser)
+# Binary parser
+
+[![Deno](https://github.com/glooca/parser/actions/workflows/deno.yml/badge.svg?branch=main)](https://github.com/glooca/parser/actions/workflows/deno.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/glooca/parser?logo=codecov)](https://app.codecov.io/gh/glooca/parser)
+[![deno land](https://img.shields.io/badge/available%20on-deno.land%2Fx-white?logo=deno&labelColor=black)](https://deno.land/x/binary_parser)
+[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/deno.land/x/binary_parser/mod.ts)
+[![license](https://img.shields.io/github/license/glooca/parser)](LICENSE)
 
 A simple parser for easily creating both encoding and decoding for a given data type
 
@@ -14,10 +20,6 @@ deno test
 
 Import what you need from `mod.ts`
 
-## :pencil: Docs
-
-Hosted at deno.land https://doc.deno.land/https://deno.land/x/binary_parser@1.0.0/mod.ts
-
 ## :pencil2: Example
 
 ```ts
@@ -26,7 +28,7 @@ import {
   nullTermStr,
   pad,
   u32,
-} from "https://deno.land/x/binary_parser@1.0.0/mod.ts";
+} from "https://deno.land/x/binary_parser/mod.ts";
 
 interface MyInterface {
   someProp: number;
