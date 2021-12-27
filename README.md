@@ -20,6 +20,12 @@ deno test
 
 Import what you need from `mod.ts`
 
+## :pencil: Docs
+
+Can be found at https://github.com/glooca/parser/wiki
+
+There's also deno's [auto generated docs](https://doc.deno.land/https/deno.land/x/binary_parser/mod.ts)
+
 ## :pencil2: Example
 
 ```ts
