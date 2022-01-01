@@ -22,23 +22,50 @@ const testStr =
   "ÅÄÖ地拖弓늄넉깽ぞむさタヨセЯИДБ";
 const testStrBytes = new TextEncoder().encode(testStr);
 
+Deno.test("str decimal bytelength", async () => {
+  await assertRejects(
+    async () => {
+      await str(Math.PI).encode("3.1");
+    },
+    Error,
+    "Bytelength must be a positive integer"
+  );
+});
+
+Deno.test("str negative bytelength", async () => {
+  await assertRejects(
+    async () => {
+      await str(-4).encode("");
+    },
+    Error,
+    "Bytelength must be a positive integer"
+  );
+});
+
 Deno.test("known byte length string", async () => {
-  assertRejects(
+  await assertRejects(
     async () => {
       await str(0).encode(testStr);
     },
     Error,
-    `Failed to store text "${testStr}" in 0 bytes`
+    "Data bytelength doesn't match the str bytelength"
   );
-  assertRejects(
+  await assertRejects(
     async () => {
       await str(1).encode(testStr);
     },
     Error,
-    `Failed to store text "${testStr}" in 1 byte`
+    "Data bytelength doesn't match the str bytelength"
   );
   const data = await str(testStrBytes.length).encode(testStr);
   assertEquals(data, testStrBytes);
+  await assertRejects(
+    async () => {
+      await str(data.byteLength + 1).decode(data);
+    },
+    Error,
+    "Cursor index outside the data range"
+  );
   const cursor = new Cursor(0);
   assertEquals(await str(testStrBytes.length).decode(data, cursor), testStr);
   assertEquals(cursor.index, data.length);

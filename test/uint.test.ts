@@ -1,4 +1,7 @@
-import { assertEquals } from "https://deno.land/std@0.118.0/testing/asserts.ts";
+import {
+  assertEquals,
+  assertRejects,
+} from "https://deno.land/std@0.118.0/testing/asserts.ts";
 import { u8, u16, u32, Endian, Cursor } from "../mod.ts";
 
 const uint16Data = [
@@ -52,6 +55,16 @@ Deno.test("uint 32", () => {
     assertEquals(decoded, val);
     assertEquals(cursor.index, 4);
   });
+});
+
+Deno.test("uint 32 data too short", async () => {
+  await assertRejects(
+    async () => {
+      await u32().decode(new Uint8Array([0, 0, 255]));
+    },
+    undefined,
+    "Offset is outside the bounds of the DataView"
+  );
 });
 
 Deno.test("uint 16 little endian", () => {

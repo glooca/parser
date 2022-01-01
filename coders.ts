@@ -14,13 +14,24 @@ export enum Endian {
 
 const defaultEndian = Endian.Big;
 
+function assertBytelength(byteLength: number) {
+  if (byteLength < 0 || byteLength % 1 != 0)
+    throw new Error("Bytelength must be a positive integer");
+}
+function assertCursorInDataOrAtEnd(cursor: Cursor, data: Uint8Array) {
+  if (cursor.index < 0 || cursor.index > data.byteLength)
+    throw new Error("Cursor index outside the data range");
+}
+
 /**
  * When encoding advances cursor `byteLength` bytes, when decoding returns a null byte array with `byteLength`
  */
 export function pad(byteLength: number): Coder<void> {
+  assertBytelength(byteLength);
   return {
-    decode(_, cursor = new Cursor()) {
+    decode(data, cursor = new Cursor()) {
       cursor.index += byteLength;
+      assertCursorInDataOrAtEnd(cursor, data);
       return Promise.resolve();
     },
     encode() {
@@ -33,19 +44,16 @@ export function pad(byteLength: number): Coder<void> {
  * Reads `byteLength` bytes into a `Uint8Array`
  */
 export function raw(byteLength: number): Coder<Uint8Array> {
+  assertBytelength(byteLength);
   return {
     decode(data, cursor = new Cursor()) {
-      return Promise.resolve(
-        data.slice(cursor.index, (cursor.index += byteLength))
-      );
+      const slice = data.slice(cursor.index, (cursor.index += byteLength));
+      assertCursorInDataOrAtEnd(cursor, data);
+      return Promise.resolve(slice);
     },
     encode(data) {
       if (data.byteLength != byteLength) {
-        throw new Error(
-          `Failed to store ${data} in ${byteLength} byte${
-            byteLength !== 1 ? "s" : ""
-          }`
-        );
+        throw new Error("Data bytelength doesn't match the raw bytelength");
       }
       return Promise.resolve(data);
     },
@@ -165,6 +173,8 @@ export const f64: (endian?: Endian) => Coder<number> = numCoder(NumType.f64);
  * When encoding `throws` if the data doesn't contain `length` elements
  */
 export function arr<T>(length: number, coder: Coder<T>): Coder<T[]> {
+  if (length < 0 || length % 1 != 0)
+    throw new Error("Array length must be a positive integer");
   return {
     async decode(data, cursor = new Cursor()) {
       const retVal: T[] = [];
@@ -175,9 +185,7 @@ export function arr<T>(length: number, coder: Coder<T>): Coder<T[]> {
     },
     encode(data) {
       if (data.length != length) {
-        throw new Error(
-          `Failed to store ${data.length} elements into an array of length ${length}`
-        );
+        throw new Error("Data length doesn't match the array length");
       }
       const encodedValues = data.map((value) => coder.encode(value));
       return asyncMergeUint8Arrays(...encodedValues);
@@ -188,17 +196,13 @@ export function arr<T>(length: number, coder: Coder<T>): Coder<T[]> {
 function nLenArrCoder<T>(length: Coder<number>, coder: Coder<T>): Coder<T[]> {
   return {
     async decode(data, cursor = new Cursor()) {
-      const strLen = await length.decode(data, cursor);
-      const retArr: Promise<T>[] = [];
-      for (let i = 0; i < strLen; i++) {
-        retArr.push(coder.decode(data, cursor));
-      }
-      return Promise.all(retArr);
+      const arrLen = await length.decode(data, cursor);
+      return arr(arrLen, coder).decode(data, cursor);
     },
     encode(data) {
       return asyncMergeUint8Arrays(
         length.encode(data.length),
-        ...data.map((val) => coder.encode(val))
+        arr(data.length, coder).encode(data)
       );
     },
   };
@@ -245,22 +249,19 @@ export const bool: Coder<boolean> = {
  * When encoding `throws` if the `byteLength` doesn't match the data
  */
 export function str(byteLength: number): Coder<string> {
+  assertBytelength(byteLength);
   return {
     decode(data, cursor = new Cursor()) {
-      return Promise.resolve(
-        new TextDecoder().decode(
-          data.slice(cursor.index, (cursor.index += byteLength))
-        )
+      const str = new TextDecoder().decode(
+        data.slice(cursor.index, (cursor.index += byteLength))
       );
+      assertCursorInDataOrAtEnd(cursor, data);
+      return Promise.resolve(str);
     },
     encode(data) {
       const encoded = new TextEncoder().encode(data);
       if (encoded.byteLength != byteLength) {
-        throw new Error(
-          `Failed to store text "${data}" in ${byteLength} byte${
-            byteLength !== 1 ? "s" : ""
-          }`
-        );
+        throw new Error("Data bytelength doesn't match the str bytelength");
       }
       return Promise.resolve(encoded);
     },
