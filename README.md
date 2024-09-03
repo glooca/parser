@@ -1,3 +1,6 @@
+> [!NOTE]
+> This repository has been archived and is no longer maintained.
+
 # Binary parser
 
 [![Deno](https://github.com/glooca/parser/actions/workflows/deno.yml/badge.svg?branch=main)](https://github.com/glooca/parser/actions/workflows/deno.yml)
